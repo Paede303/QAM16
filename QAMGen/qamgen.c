@@ -57,6 +57,14 @@ typedef enum
     sendChecksum
 } eProtokollStates;
 
+typedef enum
+{
+	amp_025,
+	amp_050,
+	amp_075,
+	amp_100
+} ein_kHz_amplitude;
+
 TaskHandle_t xsendFrame;
 
 EventGroupHandle_t xQAMchannel_1;
@@ -223,20 +231,52 @@ void vQuamGen(void *pvParameters) {
 
 void fillBuffer(uint16_t buffer[NR_OF_GENERATOR_SAMPLES]) {
     
-    uint16_t Amp=1;
     uint8_t  EventGroupBits= xEventGroupGetBitsFromISR(xQAMchannel_1);
-    if (EventGroupBits&ein_kHz_0_25V)
-    {
+	ein_kHz_amplitude Amplitude = amp_025;
+	
+	if(EventGroupBits&ein_kHz_0_25V)
+	{
+		ein_kHz_amplitude = amp_025;
+	}
+	if(EventGroupBits&ein_kHz_0_50V)
+	{
+		ein_kHz_amplitude = amp_050;
+	}
+	if(EventGroupBits&ein_kHZ_0_75V)
+	{
+		ein_kHz_amplitude = amp_075;
+	}
+	if(EventGroupBits&ein_kHZ_1_00V)
+	{
+		ein_kHz_amplitude = amp_100;
+	}
+	
+    switch(ein_kHz_amplitude)
+	case amp_025:
+		{
         	for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
 	        	buffer[i] = (sinLookup1k0_25V[i]); //0x800 war offset
         	};
-    }
-    
-    else if (EventGroupBits&AMPLITUDE_2)
+		}
+    case amp_050:
     {
-        Amp=2;
+	    for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
+		    buffer[i] = (sinLookup1k0_5V[i]); //0x800 war offset
+	    };
     }
-
+	case amp_075:
+	{
+		for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
+			buffer[i] = (sinLookup1k0_75V[i]); //0x800 war offset
+		};		
+	}
+	case amp_100:
+	{
+		for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
+			buffer[i] = (sinLookup1k1V[i]); //0x800 war offset
+		};
+	}
+	
         xEventGroupSetBits(xQAMchannel_1,DATEN_AUFBEREITET);
 }
 
@@ -433,13 +473,13 @@ uint8_t Data[NR_OF_DATA_SAMPLES + 1] = {};  // Data bytes received from queue.
             /* New amplitude level for next transmission can be prepared. */
             if (ucSendByteValue & 0b00000001)
             {
-                xEventGroupSetBits(xQAMchannel_1, AMPLITUDE_2);
-                xEventGroupClearBits(xQAMchannel_1, AMPLITUDE_1);
+                xEventGroupSetBits(xQAMchannel_1, ein_kHz_0_25V);
+                xEventGroupClearBits(xQAMchannel_1, ein_kHz_0_50V);
             } 
             else
             {
-                xEventGroupSetBits(xQAMchannel_1, AMPLITUDE_1);
-                xEventGroupClearBits(xQAMchannel_1, AMPLITUDE_2);
+                xEventGroupSetBits(xQAMchannel_1, ein_kHz_0_25V);
+                xEventGroupClearBits(xQAMchannel_1, ein_kHz_0_50V);
             }
         }
         
