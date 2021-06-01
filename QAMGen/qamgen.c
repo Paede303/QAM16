@@ -30,10 +30,10 @@
 #define ein_kHz_0_50V 0x20
 #define ein_kHZ_0_75V 0x40
 #define ein_kHZ_1_00V 0x80
-#define zwei_kHz_0_25V 0x100
-#define zwei_kHz_0_50V 0x200
-#define zwei_kHz_0_75V 0x400
-#define zwei_kHz_1_00V 0x800
+#define zwei_kHz_0_25V 0x100UL
+#define zwei_kHz_0_50V 0x200UL
+#define zwei_kHz_0_75V 0x400UL
+#define zwei_kHz_1_00V 0x800UL
 
 #define NR_OF_DATA_SAMPLES 32UL
 
@@ -104,12 +104,14 @@ const int16_t sinLookup1k1V[NR_OF_GENERATOR_SAMPLES] = { 0,  242,  475,  690,  8
 														  };
 														
                                                          
-const int16_t sinLookup2000[NR_OF_GENERATOR_SAMPLES] = { 0,  157,  290,  378,  410,  378,  290,  157,
-                                                         0, -157, -290, -378, -410, -378, -290, -157,
-                                                         0,  157,  290,  378,  410,  378,  290,  157,    
-                                                         0, -157, -290, -378, -410, -378, -290, -157
+const int16_t sinLookup2k0_25V[NR_OF_GENERATOR_SAMPLES] = { 0,  119,  219,  287,  310,  287,  219,  119,    0, -119, -219, -287, -310, -287, -219, -119,    0,  119,  219,  287,  310,  287,  219,  119,    0, -119, -219, -287, -310, -287, -219, -119,
                                                          };
-
+const int16_t sinLookup2k0_5V[NR_OF_GENERATOR_SAMPLES] = { 0,  237,  439,  573,  621,  573,  439,  237,    0, -237, -439, -573, -621, -573, -439, -237,    0,  237,  439,  573,  621,  573,  439,  237,    0, -237, -439, -573, -621, -573, -439, -237, 
+};
+const int16_t sinLookup2k0_75V[NR_OF_GENERATOR_SAMPLES] = { 0,  356,  658,  860,  931,  860,  658,  356,    0, -356, -658, -860, -931, -860, -658, -356,    0,  356,  658,  860,  931,  860,  658,  356,    0, -356, -658, -860, -931, -860, -658, -356,
+};
+const int16_t sinLookup2k1V[NR_OF_GENERATOR_SAMPLES] = { 0,  475,  878, 1147, 1241, 1147,  878,  475,    0, -475, -878, -1147, -1241, -1147, -878, -475,    0,  475,  878, 1147, 1241, 1147,  878,  475,    0, -475, -878, -1147, -1241, -1147, -878, -475, 
+};
 /* Buffers for DAC with DMA. */
 static uint16_t dacBuffer0[NR_OF_GENERATOR_SAMPLES] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 														0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -231,7 +233,7 @@ void vQuamGen(void *pvParameters) {
 void fillBuffer(uint16_t buffer[NR_OF_GENERATOR_SAMPLES]) {
     
     uint8_t  EventGroupBits= xEventGroupGetBitsFromISR(xQAMchannel_1);
-	ein_kHz_amplitude Amplitude = amp_100;
+	/*ein_kHz_amplitude Amplitude = amp_100;
 	
 	if(EventGroupBits&ein_kHz_0_25V)
 	{
@@ -248,11 +250,11 @@ void fillBuffer(uint16_t buffer[NR_OF_GENERATOR_SAMPLES]) {
 	if(EventGroupBits&ein_kHZ_1_00V)
 	{
 		ein_kHz_amplitude Amplitude = amp_100;
-	}
+	}*/
 	
-    switch(Amplitude)
+    switch(EventGroupBits)
 	{
-		case amp_025:
+		case ein_kHz_0_25V:
 		{
         		for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
 	        		buffer[i] = 0x800+(sinLookup1k0_25V[i]); //0x800 war offset
@@ -260,7 +262,7 @@ void fillBuffer(uint16_t buffer[NR_OF_GENERATOR_SAMPLES]) {
 		break;
 		}
 
-		case amp_050:
+		case ein_kHz_0_50V:
 		{
 			for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
 				buffer[i] = 0x800+(sinLookup1k0_5V[i]); //0x800 war offset
@@ -268,7 +270,7 @@ void fillBuffer(uint16_t buffer[NR_OF_GENERATOR_SAMPLES]) {
 		break;
 		}
 
-		case amp_075:
+		case ein_kHZ_0_75V:
 		{
 			for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
 				buffer[i] = 0x800+(sinLookup1k0_75V[i]); //0x800 war offset
@@ -276,7 +278,7 @@ void fillBuffer(uint16_t buffer[NR_OF_GENERATOR_SAMPLES]) {
 		break;
 		}
 
-		case amp_100:
+		case ein_kHZ_1_00V:
 		{
 			for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
 				buffer[i] = 0x800+(sinLookup1k1V[i]); //0x800 war offset
@@ -290,25 +292,46 @@ void fillBuffer(uint16_t buffer[NR_OF_GENERATOR_SAMPLES]) {
 
 // Mit ISR EventGroups arbeiten, da der Interrupt Buffer füllt
 void fillBuffer_1(uint16_t buffer[NR_OF_GENERATOR_SAMPLES]) {
-    uint8_t Amp_1=1;
-    uint8_t  EventGroupBits= xEventGroupGetBitsFromISR(xQAMchannel_2);
-    
-    if (EventGroupBits&AMPLITUDE_1)
-    {
-        Amp_1=1;
-    }
+    static uint8_t Amp_1=1;
+    volatile uint16_t  EventGroupBits= xEventGroupGetBitsFromISR(xQAMchannel_2);
+    Amp_1++;
+   switch(EventGroupBits)
+   {
+	   case zwei_kHz_0_25V:
+	   {
+		   for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
+			   buffer[i] = 0x800+(sinLookup2k0_25V[i]); //0x800 war offset
+		   };
+		   break;
+	   }
 
-    else if (EventGroupBits&AMPLITUDE_2)
-    {
-        Amp_1=2;
-    }
-            
-    for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
-       buffer[i] = 0x800 + (Amp_1*sinLookup2000[i]); 
-    }
-       xEventGroupSetBits(xQAMchannel_2,DATEN_AUFBEREITET);
+	   case zwei_kHz_0_50V:
+	   {
+		   for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
+			   buffer[i] = 0x800+(sinLookup2k0_5V[i]); //0x800 war offset
+		   };
+		   break;
+	   }
+
+	   case zwei_kHz_0_75V:
+	   {
+		   for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
+			   buffer[i] = 0x800+(sinLookup2k0_75V[i]); //0x800 war offset
+		   };
+		   break;
+	   }
+
+	   case zwei_kHz_1_00V:
+	   {
+		   for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
+			   buffer[i] = 0x800+(sinLookup2k1V[i]); //0x800 war offset
+		   };
+		   break;
+	   }
+   }
    
-}
+   xEventGroupSetBits(xQAMchannel_2,DATEN_AUFBEREITET);
+   }
 
 ISR(DMA_CH0_vect)
 {
@@ -349,7 +372,7 @@ void vsendFrame(void *pvParameters)
 {
 (void) pvParameters;
     
-uint8_t ucSendByteValue;                    // Variable current byte to send is stored
+volatile uint8_t ucSendByteValue;                    // Variable current byte to send is stored
 uint8_t ucSendBitPackageCounter = 0;        // Counts the sent bit packages, for QAM4 for 1 byte there are 4 packages (4 x 2bit = 8bit)
 uint8_t ucReadyForNewDataByte = 1;          // Indicates if new data byte can be provided.
 uint8_t ucNewDataByteValue = 0;             // Stores the new data byte value, which should be sent next.
@@ -379,7 +402,7 @@ uint8_t Data[NR_OF_DATA_SAMPLES + 1] = {};  // Data bytes received from queue.
                     if (ucReadyForNewDataByte)
                     {
                         ucIdleSendByteFlag = 1;
-                        ucNewDataByteValue = 0xAF;
+                        ucNewDataByteValue = 0x00; //AF
                         ucReadyForNewDataByte = 0;
                     }
                 }
@@ -389,7 +412,7 @@ uint8_t Data[NR_OF_DATA_SAMPLES + 1] = {};  // Data bytes received from queue.
                     if (ucReadyForNewDataByte)
                     {
                         ucIdleSendByteFlag = 0;
-                        ucNewDataByteValue = 0x05;
+                        ucNewDataByteValue = 0x00; //05
                         ucReadyForNewDataByte = 0;
                         
                         
@@ -463,7 +486,7 @@ uint8_t Data[NR_OF_DATA_SAMPLES + 1] = {};  // Data bytes received from queue.
         /************************************************************************/
         
         /* Check if all data bit packages of one byte were sent. */
-        if (ucSendBitPackageCounter > 3)
+        if (ucSendBitPackageCounter > 1) //3
         {
             /* Then the new data byte can be loaded. */
             ucSendByteValue = ucNewDataByteValue;
@@ -479,17 +502,29 @@ uint8_t Data[NR_OF_DATA_SAMPLES + 1] = {};  // Data bytes received from queue.
             ucQAMChannelsReady |= QAMCHANNEL_1_READY;
             
             /* New amplitude level for next transmission can be prepared. */
-            if (ucSendByteValue & 0b00000001)
+            switch (ucSendByteValue & 0b000000011)
             {
-                xEventGroupSetBits(xQAMchannel_1, ein_kHz_0_25V);
-                xEventGroupClearBits(xQAMchannel_1, ein_kHz_0_50V);
-            } 
-            else
-            {
-                xEventGroupSetBits(xQAMchannel_1, ein_kHz_0_25V);
-                xEventGroupClearBits(xQAMchannel_1, ein_kHz_0_50V);
-            }
-        }
+	            case 0b00000000:
+	            xEventGroupSetBits(xQAMchannel_1, ein_kHz_0_25V);
+	            xEventGroupClearBits(xQAMchannel_1, ein_kHz_0_50V|ein_kHZ_0_75V|ein_kHZ_1_00V);
+	            break;
+	            
+	            case 0b00000001:
+	            xEventGroupSetBits(xQAMchannel_1, ein_kHz_0_50V);
+	            xEventGroupClearBits(xQAMchannel_1, ein_kHz_0_25V|ein_kHZ_0_75V|ein_kHZ_1_00V);
+	            break;
+	            
+	            case 0b00000010:
+	            xEventGroupSetBits(xQAMchannel_1, ein_kHZ_0_75V);
+	            xEventGroupClearBits(xQAMchannel_1, ein_kHz_0_50V|ein_kHz_0_25V|ein_kHZ_1_00V);
+	            break;
+	            
+	            case 0b00000011:
+	            xEventGroupSetBits(xQAMchannel_1, ein_kHZ_1_00V);
+	            xEventGroupClearBits(xQAMchannel_1, ein_kHz_0_50V|ein_kHZ_0_75V|ein_kHz_0_25V);
+	            break;
+            }        
+		}
         
         /* Check if QAM channel 2 got amplitude value. */
         if (xEventGroupGetBits(xQAMchannel_2)&DATEN_AUFBEREITET)
@@ -499,15 +534,27 @@ uint8_t Data[NR_OF_DATA_SAMPLES + 1] = {};  // Data bytes received from queue.
             ucQAMChannelsReady |= QAMCHANNEL_2_READY;
             
             /* New amplitude level for next transmission can be prepared. */
-            if (ucSendByteValue & 0b00000010)
+            switch (ucSendByteValue & 0b000001100)
             {
-                xEventGroupSetBits(xQAMchannel_2, AMPLITUDE_2);
-                xEventGroupClearBits(xQAMchannel_2, AMPLITUDE_1);
-            }
-            else
-            {
-                xEventGroupSetBits(xQAMchannel_2, AMPLITUDE_1);
-                xEventGroupClearBits(xQAMchannel_2, AMPLITUDE_2);
+				case 0b00000000:
+                xEventGroupSetBits(xQAMchannel_2, zwei_kHz_0_25V);
+                xEventGroupClearBits(xQAMchannel_2, zwei_kHz_0_50V|zwei_kHz_0_75V|zwei_kHz_1_00V);
+				break;
+				
+				case 0b00000100:
+				xEventGroupSetBits(xQAMchannel_2, zwei_kHz_0_50V);
+				xEventGroupClearBits(xQAMchannel_2, zwei_kHz_0_25V|zwei_kHz_0_75V|zwei_kHz_1_00V);
+				break;
+				
+				case 0b00001000:
+				xEventGroupSetBits(xQAMchannel_2, zwei_kHz_0_75V);
+				xEventGroupClearBits(xQAMchannel_2, zwei_kHz_0_50V|zwei_kHz_0_25V|zwei_kHz_1_00V);
+				break;
+				
+				case 0b00001100:
+				xEventGroupSetBits(xQAMchannel_2, zwei_kHz_1_00V);
+				xEventGroupClearBits(xQAMchannel_2, zwei_kHz_0_50V|zwei_kHz_0_75V|zwei_kHz_0_25V);
+				break;
             }
         }        
         
@@ -517,7 +564,7 @@ uint8_t Data[NR_OF_DATA_SAMPLES + 1] = {};  // Data bytes received from queue.
             /* Then new bit package can be prepared. */
             ucQAMChannelsReady = 0;
             ucSendBitPackageCounter++;
-            ucSendByteValue = ucSendByteValue >> 2;
+            ucSendByteValue = ucSendByteValue >> 4; //2
         }
         vTaskDelay(pdMS_TO_TICKS(1));
     }

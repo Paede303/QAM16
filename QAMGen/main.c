@@ -146,14 +146,14 @@ eSteuerungStates Steuerung = smalldata;
 			case middledata:
 			{
                 DataString[0] = 0x2F;
-                DataString[1] = 0x57;
-                DataString[2] = 0x6F;
-                DataString[3] = 0x2D;
-                DataString[4] = 0x62;
-                DataString[5] = 0x69;
-                DataString[6] = 0x6E;
-                DataString[7] = 0x2D;
-                DataString[8] = 0x69;
+                DataString[1] = 0x01;
+                DataString[2] = 0x23;
+                DataString[3] = 0x45;
+                DataString[4] = 0x67;
+                DataString[5] = 0x89;
+                DataString[6] = 0xAB;
+                DataString[7] = 0xCD;
+                DataString[8] = 0xEF;
                 DataString[9] = 0x63;
                 DataString[10] = 0x68;
                 DataString[11] = 0x2D;
