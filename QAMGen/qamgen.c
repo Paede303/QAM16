@@ -79,29 +79,28 @@ QueueHandle_t xQueue_Data;
                                                         -410, -402, -378, -341, -290, -228, -157,  -80
                                                          };*/
 														 
-const int16_t sinLookup1k0_25V[NR_OF_GENERATOR_SAMPLES] = { 0,  200,  392,  569,  724,  851,  946, 1004, 
-															1024, 1004,  946,  851,  724,  569,  392,  200, 
-															0, -200, -392, -569, -724, -851, -946, -1004, 
-															-1024, -1004, -946, -851, -724, -569, -392, -200,
+const int16_t sinLookup1k0_25V[NR_OF_GENERATOR_SAMPLES] = { 0,   61,  119,  172,  219,  258,  287,  304,
+															310,  304,  287,  258,  219,  172,  119,   61,   
+															0,  -61, -119, -172, -219, -258, -287, -304, 
+															-310, -304, -287, -258, -219, -172, -119,  -61,
 														  };
 														  
-const int16_t sinLookup1k0_5V[NR_OF_GENERATOR_SAMPLES] = { 0,  400,  784, 1138, 1448, 1703, 1892, 2009, 
-														   2048, 2009, 1892, 1703, 1448, 1138,  784, 
-														   400,    0, -400, -784, -1138, -1448, -1703, 
-														   -1892, -2009, -2048, -2009, -1892, -1703, 
-														   -1448, -1138, -784, -400, 
+const int16_t sinLookup1k0_5V[NR_OF_GENERATOR_SAMPLES] = { 0,  121,  237,  345,  439,  516,  573,  609,  
+														   621,  609,  573,  516,  439,  345,  237,  121,    
+														   0, -121, -237, -345, -439, -516, -573, -609, 
+														   -621, -609, -573, -516, -439, -345, -237, -121,
 														 };
 														 
-const int16_t sinLookup1k0_75V[NR_OF_GENERATOR_SAMPLES] = { 0,  599, 1176, 1707, 2172, 2554, 2838, 3013,
-															3072, 3013, 2838, 2554, 2172, 1707, 1176,  599, 
-															0, -599, -1176, -1707, -2172, -2554, -2838, -3013,
-															-3072, -3013, -2838, -2554, -2172, -1707, -1176, -599, 
+const int16_t sinLookup1k0_75V[NR_OF_GENERATOR_SAMPLES] = { 0,  182,  356,  517,  658,  774,  860,  913,  
+															931,  913,  860,  774,  658,  517,  356,  182,    
+															0, -182, -356, -517, -658, -774, -860, -913, 
+															-931, -913, -860, -774, -658, -517, -356, -182,
 														  };
 														  
-const int16_t sinLookup1k1V[NR_OF_GENERATOR_SAMPLES] = { 0,  799, 1567, 2276, 2896, 3406, 3784, 4017, 4096, 4017,
-															3784, 3406, 2896, 2276, 1567,  799,    0, -799, -1567, 
-															-2276, -2896, -3406, -3784, -4017, -4096, -4017, -3784, 
-															-3406, -2896, -2276, -1567, -799,
+const int16_t sinLookup1k1V[NR_OF_GENERATOR_SAMPLES] = { 0,  242,  475,  690,  878, 1032, 1147, 1217, 1241, 
+														 1217, 1147, 1032,  878,  690,  475,  242,    0, 
+														 -242, -475, -690, -878, -1032, -1147, -1217, -1241, 
+														 -1217, -1147, -1032, -878, -690, -475, -242,
 														  };
 														
                                                          
@@ -232,51 +231,60 @@ void vQuamGen(void *pvParameters) {
 void fillBuffer(uint16_t buffer[NR_OF_GENERATOR_SAMPLES]) {
     
     uint8_t  EventGroupBits= xEventGroupGetBitsFromISR(xQAMchannel_1);
-	ein_kHz_amplitude Amplitude = amp_025;
+	ein_kHz_amplitude Amplitude = amp_100;
 	
 	if(EventGroupBits&ein_kHz_0_25V)
 	{
-		ein_kHz_amplitude = amp_025;
+		ein_kHz_amplitude Amplitude = amp_025;
 	}
 	if(EventGroupBits&ein_kHz_0_50V)
 	{
-		ein_kHz_amplitude = amp_050;
+		ein_kHz_amplitude Amplitude = amp_050;
 	}
 	if(EventGroupBits&ein_kHZ_0_75V)
 	{
-		ein_kHz_amplitude = amp_075;
+		ein_kHz_amplitude Amplitude = amp_075;
 	}
 	if(EventGroupBits&ein_kHZ_1_00V)
 	{
-		ein_kHz_amplitude = amp_100;
+		ein_kHz_amplitude Amplitude = amp_100;
 	}
 	
-    switch(ein_kHz_amplitude)
-	case amp_025:
+    switch(Amplitude)
+	{
+		case amp_025:
 		{
-        	for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
-	        	buffer[i] = (sinLookup1k0_25V[i]); //0x800 war offset
-        	};
+        		for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
+	        		buffer[i] = 0x800+(sinLookup1k0_25V[i]); //0x800 war offset
+        		};
+		break;
 		}
-    case amp_050:
-    {
-	    for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
-		    buffer[i] = (sinLookup1k0_5V[i]); //0x800 war offset
-	    };
-    }
-	case amp_075:
-	{
-		for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
-			buffer[i] = (sinLookup1k0_75V[i]); //0x800 war offset
-		};		
+
+		case amp_050:
+		{
+			for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
+				buffer[i] = 0x800+(sinLookup1k0_5V[i]); //0x800 war offset
+			};
+		break;
+		}
+
+		case amp_075:
+		{
+			for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
+				buffer[i] = 0x800+(sinLookup1k0_75V[i]); //0x800 war offset
+			};		
+		break;
+		}
+
+		case amp_100:
+		{
+			for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
+				buffer[i] = 0x800+(sinLookup1k1V[i]); //0x800 war offset
+			};
+		break;
+		}
 	}
-	case amp_100:
-	{
-		for(int i = 0; i < NR_OF_GENERATOR_SAMPLES;i++) {
-			buffer[i] = (sinLookup1k1V[i]); //0x800 war offset
-		};
-	}
-	
+		
         xEventGroupSetBits(xQAMchannel_1,DATEN_AUFBEREITET);
 }
 
